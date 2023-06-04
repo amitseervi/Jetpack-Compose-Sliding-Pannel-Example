@@ -61,16 +61,24 @@ class MainActivity : ComponentActivity() {
                                     .padding(it)
                             ) {
                                 Column(modifier = Modifier.align(Alignment.Center)) {
-                                    Button(onClick = { }, modifier = Modifier) {
+                                    Button(onClick = {
+                                        bottomBarVisible = false
+                                    }, modifier = Modifier) {
                                         Text(text = "Hide BottomBar")
                                     }
-                                    Button(onClick = { }, modifier = Modifier) {
+                                    Button(onClick = {
+                                        bottomBarVisible = true
+                                    }, modifier = Modifier) {
                                         Text(text = "Show BottomBar")
                                     }
-                                    Button(onClick = { }, modifier = Modifier) {
+                                    Button(onClick = {
+                                        playBarVisible = false
+                                    }, modifier = Modifier) {
                                         Text(text = "Hide PlayBar")
                                     }
-                                    Button(onClick = { }, modifier = Modifier) {
+                                    Button(onClick = {
+                                        playBarVisible = true
+                                    }, modifier = Modifier) {
                                         Text(text = "Show PlayBar")
                                     }
                                 }
