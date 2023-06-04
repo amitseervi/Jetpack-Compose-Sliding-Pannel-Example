@@ -7,5 +7,6 @@ This Example design is derived from music player app which uses play now sliding
 
 ## Demo
 
-https://github.com/amitseervi/Jetpack-Compose-Sliding-Pannel-Example/blob/main/sliding_pannel_jetpack_compose.mp4
+[![Watch the video](https://github.com/amitseervi/Jetpack-Compose-Sliding-Pannel-Example/blob/main/demo_app.jpg)](https://github.com/amitseervi/Jetpack-Compose-Sliding-Pannel-Example/blob/main/sliding_pannel_jetpack_compose.mp4)
+
 
