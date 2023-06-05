@@ -18,69 +18,64 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.IntOffset
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-data class MyAnimationState(
-    val offset: Offset,
-    val alpha: Float,
-    val layoutWidth: Int,
-    val layoutHeight: Int,
-)
-
 @Composable
-fun SliderContainerLayout(
+fun SliderContainerLayoutV2(
     modifier: Modifier = Modifier,
     content: @Composable (padding: PaddingValues) -> Unit,
     bottomBar: @Composable () -> Unit,
     sliderContent: @Composable () -> Unit,
     sliderExpanded: @Composable () -> Unit,
-    playBarVisible: Boolean,
-    bottomBarVisible: Boolean,
+    slidingBottomBarVisible: Boolean,
+    navigationBottomBarVisible: Boolean,
 ) {
 
-    val playBarAnimation = remember {
+    val slidingBarAnimation = remember {
         Animatable(0f)
     }
-    val bottomBarAnimatedPosition = remember {
+    val navigationBarAnimation = remember {
         Animatable(0f)
     }
     var isExpanded by remember {
         mutableStateOf(false)
     }
-    if (playBarAnimation.value == 0f && !playBarAnimation.isRunning) {
+    if (slidingBarAnimation.value == 0f && !slidingBarAnimation.isRunning) {
         isExpanded = false
-    } else if (playBarAnimation.value == 1f && !playBarAnimation.isRunning) {
+    } else if (slidingBarAnimation.value == 1f && !slidingBarAnimation.isRunning) {
         isExpanded = true
     }
     val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(key1 = "handling_bottom_bar_visibility_$bottomBarVisible", block = {
+    LaunchedEffect(key1 = "handling_bottom_bar_visibility_$navigationBottomBarVisible", block = {
         coroutineScope.launch {
-            if (bottomBarVisible) {
-                bottomBarAnimatedPosition.animateTo(1f,animationSpec = tween(
-                    easing = LinearEasing
-                ))
+            if (navigationBottomBarVisible) {
+                navigationBarAnimation.animateTo(
+                    1f, animationSpec = tween(
+                        easing = LinearEasing
+                    )
+                )
             } else {
-                bottomBarAnimatedPosition.animateTo(0f,animationSpec = tween(
-                    easing = LinearEasing
-                ))
+                navigationBarAnimation.animateTo(
+                    0f, animationSpec = tween(
+                        easing = LinearEasing
+                    )
+                )
             }
         }
     })
-    LaunchedEffect(key1 = "handling_slider_bar_visibility_$playBarVisible", block = {
+    LaunchedEffect(key1 = "handling_slider_bar_visibility_$slidingBottomBarVisible", block = {
         coroutineScope.launch {
-            if (playBarVisible) {
-                playBarAnimation.animateTo(
+            if (slidingBottomBarVisible) {
+                slidingBarAnimation.animateTo(
                     0f, animationSpec = tween(
                         easing = LinearEasing
                     )
                 ) // visible but collapsed
             } else {
-                playBarAnimation.animateTo(
+                slidingBarAnimation.animateTo(
                     -1f, animationSpec = tween(
                         easing = LinearEasing
                     )
@@ -93,7 +88,7 @@ fun SliderContainerLayout(
         val layoutWidth = constraints.maxWidth
         val layoutHeight = constraints.maxHeight
         val looseConstraints = constraints.copy(minWidth = 0, minHeight = 0)
-        val playBarVisibleProgress = playBarAnimation.value.coerceIn(0f, 1f)
+        val playBarVisibleProgress = slidingBarAnimation.value.coerceIn(0f, 1f)
         layout(layoutWidth, layoutHeight) {
             val bottomBarPlaceable = subcompose(SliderContainerLayoutSlots.BOTTOM_BAR) {
                 Surface(modifier = Modifier.offset {
@@ -107,8 +102,8 @@ fun SliderContainerLayout(
             }.map {
                 it.measure(looseConstraints)
             }
-            val bottomBarHeight = ((bottomBarPlaceable.firstOrNull()?.height
-                ?: 0) * bottomBarAnimatedPosition.value).roundToInt()
+            val bottomBarFixedHeight = bottomBarPlaceable.firstOrNull()?.height ?: 0
+            val bottomBarHeight = (bottomBarFixedHeight * navigationBarAnimation.value).roundToInt()
             val sliderContentPlaceable = subcompose(SliderContainerLayoutSlots.SLIDER_CONTENT) {
                 Surface(
                     modifier = Modifier
@@ -117,7 +112,7 @@ fun SliderContainerLayout(
                             orientation = Orientation.Vertical, state = rememberDraggableState(
                                 onDelta = {
                                     coroutineScope.launch {
-                                        playBarAnimation.snapTo(
+                                        slidingBarAnimation.snapTo(
                                             (playBarVisibleProgress - (it / (layoutHeight - bottomBarHeight)) * 1.3f).coerceIn(
                                                 0f,
                                                 1f
@@ -128,13 +123,13 @@ fun SliderContainerLayout(
                             ),
                             onDragStopped = {
                                 if (playBarVisibleProgress > 0.5f) {
-                                    playBarAnimation.animateTo(
+                                    slidingBarAnimation.animateTo(
                                         1f, animationSpec = tween(
                                             easing = LinearEasing
                                         )
                                     )
                                 } else {
-                                    playBarAnimation.animateTo(
+                                    slidingBarAnimation.animateTo(
                                         0f, animationSpec = tween(
                                             easing = LinearEasing
                                         )
@@ -152,41 +147,32 @@ fun SliderContainerLayout(
             }
             val sliderExpandedPlaceable =
                 subcompose(SliderContainerLayoutSlots.SLIDER_EXPANDED_CONTENT) {
-                    Surface(
-                        modifier = Modifier
-                            .alpha(playBarVisibleProgress)
-                    ) {
+                    Surface(modifier = Modifier) {
                         sliderExpanded()
                     }
                 }.map { it.measure(constraints) }
             val sliderHeight = sliderContentPlaceable.firstOrNull()?.height ?: 0
             val sliderTop =
-                if (playBarAnimation.value < 0f)
+                if (slidingBarAnimation.value < 0f)
                     interpolateValue(
                         layoutHeight - bottomBarHeight - sliderHeight,
                         layoutHeight - bottomBarHeight,
-                        -playBarAnimation.value
+                        -slidingBarAnimation.value
                     )
                 else interpolateValue(
                     layoutHeight - bottomBarHeight - sliderHeight,
                     0,
-                    playBarAnimation.value
+                    slidingBarAnimation.value
                 )
             val contentPlaceable = subcompose(SliderContainerLayoutSlots.CONTENT) {
-                Surface(
-                    modifier = Modifier
-                        .alpha((1 - playBarVisibleProgress).coerceIn(0.5f, 1f))
-                ) {
-                    content(
-                        PaddingValues(
-                            bottom = (layoutHeight - sliderTop).coerceIn(
-                                0,
-                                sliderHeight + bottomBarHeight
-                            ).toDp()
-                        )
+                content(
+                    PaddingValues(
+                        bottom = (layoutHeight - sliderTop).coerceIn(
+                            0,
+                            sliderHeight + bottomBarFixedHeight
+                        ).toDp()
                     )
-                }
-
+                )
             }.map { it.measure(looseConstraints) }
 
             contentPlaceable.forEach {
@@ -215,8 +201,4 @@ fun SliderContainerLayout(
 
 private fun interpolateValue(start: Int, end: Int, progress: Float): Int {
     return ((end - start).times(progress).roundToInt() + start)
-}
-
-enum class SliderContainerLayoutSlots {
-    CONTENT, BOTTOM_BAR, SLIDER_CONTENT, SLIDER_EXPANDED_CONTENT
 }

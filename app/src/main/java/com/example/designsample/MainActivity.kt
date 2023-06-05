@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.designsample.slider.SliderContainerLayout
+import com.example.designsample.slider.SliderContainerLayoutV2
 import com.example.designsample.ui.theme.DesignSampleTheme
 
 class MainActivity : ComponentActivity() {
@@ -52,7 +53,7 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(true)
                 }
                 Box(modifier = Modifier.fillMaxSize()) {
-                    SliderContainerLayout(
+                    SliderContainerLayoutV2(
                         modifier = Modifier.fillMaxSize(),
                         content = {
                             Box(
