@@ -1,6 +1,8 @@
 package com.example.designsample.slider
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -40,15 +42,6 @@ fun SliderContainerLayout(
     playBarVisible: Boolean,
     bottomBarVisible: Boolean,
 ) {
-    var stateBottomBarHeight by remember {
-        mutableStateOf(0)
-    }
-    var stateLayoutHeight by remember {
-        mutableStateOf(0)
-    }
-    var stateSliderHeight by remember {
-        mutableStateOf(0)
-    }
 
     val playBarAnimation = remember {
         Animatable(0f)
@@ -68,18 +61,30 @@ fun SliderContainerLayout(
     LaunchedEffect(key1 = "handling_bottom_bar_visibility_$bottomBarVisible", block = {
         coroutineScope.launch {
             if (bottomBarVisible) {
-                bottomBarAnimatedPosition.animateTo(1f)
+                bottomBarAnimatedPosition.animateTo(1f,animationSpec = tween(
+                    easing = LinearEasing
+                ))
             } else {
-                bottomBarAnimatedPosition.animateTo(0f)
+                bottomBarAnimatedPosition.animateTo(0f,animationSpec = tween(
+                    easing = LinearEasing
+                ))
             }
         }
     })
     LaunchedEffect(key1 = "handling_slider_bar_visibility_$playBarVisible", block = {
         coroutineScope.launch {
             if (playBarVisible) {
-                playBarAnimation.animateTo(0f) // visible but collapsed
+                playBarAnimation.animateTo(
+                    0f, animationSpec = tween(
+                        easing = LinearEasing
+                    )
+                ) // visible but collapsed
             } else {
-                playBarAnimation.animateTo(-1f) //not visible
+                playBarAnimation.animateTo(
+                    -1f, animationSpec = tween(
+                        easing = LinearEasing
+                    )
+                ) //not visible
             }
         }
     })
@@ -87,7 +92,6 @@ fun SliderContainerLayout(
     SubcomposeLayout(modifier = modifier) { constraints ->
         val layoutWidth = constraints.maxWidth
         val layoutHeight = constraints.maxHeight
-        stateLayoutHeight = layoutHeight
         val looseConstraints = constraints.copy(minWidth = 0, minHeight = 0)
         val playBarVisibleProgress = playBarAnimation.value.coerceIn(0f, 1f)
         layout(layoutWidth, layoutHeight) {
@@ -105,7 +109,6 @@ fun SliderContainerLayout(
             }
             val bottomBarHeight = ((bottomBarPlaceable.firstOrNull()?.height
                 ?: 0) * bottomBarAnimatedPosition.value).roundToInt()
-            stateBottomBarHeight = bottomBarHeight
             val sliderContentPlaceable = subcompose(SliderContainerLayoutSlots.SLIDER_CONTENT) {
                 Surface(
                     modifier = Modifier
@@ -125,9 +128,17 @@ fun SliderContainerLayout(
                             ),
                             onDragStopped = {
                                 if (playBarVisibleProgress > 0.5f) {
-                                    playBarAnimation.animateTo(1f)
+                                    playBarAnimation.animateTo(
+                                        1f, animationSpec = tween(
+                                            easing = LinearEasing
+                                        )
+                                    )
                                 } else {
-                                    playBarAnimation.animateTo(0f)
+                                    playBarAnimation.animateTo(
+                                        0f, animationSpec = tween(
+                                            easing = LinearEasing
+                                        )
+                                    )
 
                                 }
                             }
@@ -149,7 +160,6 @@ fun SliderContainerLayout(
                     }
                 }.map { it.measure(constraints) }
             val sliderHeight = sliderContentPlaceable.firstOrNull()?.height ?: 0
-            stateSliderHeight = sliderHeight
             val sliderTop =
                 if (playBarAnimation.value < 0f)
                     interpolateValue(
