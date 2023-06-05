@@ -150,23 +150,6 @@ fun SliderContainerLayout(
                 }.map { it.measure(constraints) }
             val sliderHeight = sliderContentPlaceable.firstOrNull()?.height ?: 0
             stateSliderHeight = sliderHeight
-            val contentPlaceable = subcompose(SliderContainerLayoutSlots.CONTENT) {
-                Surface(
-                    modifier = Modifier
-                        .alpha(1 - playBarVisibleProgress)
-                        .scale((1 - playBarVisibleProgress).coerceIn(0.5f, 1f))
-                ) {
-                    content(PaddingValues(bottom = (bottomBarHeight + sliderHeight).toDp()))
-                }
-
-            }.map { it.measure(looseConstraints) }
-
-            contentPlaceable.forEach {
-                it.place(0, 0)
-            }
-            // -1 = (layoutHeight - bottomBarHeight)
-            // 1 = (layoutHeight - bottomBarHeight - playBarHeight)
-            // 0 = 0f
             val sliderTop =
                 if (playBarAnimation.value < 0f)
                     interpolateValue(
@@ -179,6 +162,23 @@ fun SliderContainerLayout(
                     0,
                     playBarAnimation.value
                 )
+            val contentPlaceable = subcompose(SliderContainerLayoutSlots.CONTENT) {
+                Surface(
+                    modifier = Modifier
+                        .alpha(1 - playBarVisibleProgress)
+                        .scale((1 - playBarVisibleProgress).coerceIn(0.5f, 1f))
+                ) {
+                    content(PaddingValues(bottom = (layoutHeight-sliderTop).coerceAtLeast(0).toDp()))
+                }
+
+            }.map { it.measure(looseConstraints) }
+
+            contentPlaceable.forEach {
+                it.place(0, 0)
+            }
+            // -1 = (layoutHeight - bottomBarHeight)
+            // 1 = (layoutHeight - bottomBarHeight - playBarHeight)
+            // 0 = 0f
             if (playBarVisibleProgress != 0f) {
                 sliderExpandedPlaceable.forEach {
                     it.place(0, sliderTop)
@@ -190,7 +190,7 @@ fun SliderContainerLayout(
             bottomBarPlaceable.forEach {
                 it.place(
                     0,
-                    layoutHeight - (bottomBarHeight * bottomBarAnimatedPosition.value).roundToInt()
+                    layoutHeight - bottomBarHeight
                 )
             }
         }
