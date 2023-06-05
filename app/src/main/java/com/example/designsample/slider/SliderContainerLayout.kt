@@ -168,7 +168,14 @@ fun SliderContainerLayout(
                         .alpha(1 - playBarVisibleProgress)
                         .scale((1 - playBarVisibleProgress).coerceIn(0.5f, 1f))
                 ) {
-                    content(PaddingValues(bottom = (layoutHeight-sliderTop).coerceAtLeast(0).toDp()))
+                    content(
+                        PaddingValues(
+                            bottom = (layoutHeight - sliderTop).coerceIn(
+                                0,
+                                sliderHeight + bottomBarHeight
+                            ).toDp()
+                        )
+                    )
                 }
 
             }.map { it.measure(looseConstraints) }
